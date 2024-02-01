@@ -11,6 +11,64 @@ from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe,
 User = get_user_model()
 
 
+class UsersTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+    def setUp(self) -> None:
+        self.client_auth = APIClient()
+        self.user = User.objects.create_user(username='user1',
+                                             email='user1@email.ru',
+                                             first_name='first_name1',
+                                             last_name='last_name1',
+                                             password='')
+        token = Token.objects.get_or_create(user=self.user)
+        self.client_auth.force_authenticate(user=self.user,
+                                            token=token)
+
+        User.objects.create_user(username='user2',
+                                 email='user2@email.ru',
+                                 first_name='first_name2',
+                                 last_name='last_name2',
+                                 password='')
+
+    def test_pagination_users_list(self):
+        url = reverse('users-list')
+        resp = self.client_auth.get(url)
+
+        params = {
+            "page": 3,
+            "limit": 2,
+        }
+        # resp = self.client_auth.get(url)
+        # resp = self.client_auth.get(url, data=params)
+        # self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        #
+        # self.assertEqual(len(resp.results), 1)
+        # self.assertEqual(resp.results[0]['username'], user5.username)
+
+    def test_get_filtered_list(self):
+        url = reverse('ingredients-list')
+
+        params = {
+            "name": "Sug",
+        }
+
+        resp = self.client_auth.get(url, data=params)
+
+        self.assertEqual(len(resp.data), 1)
+        self.assertEqual(resp.data[0]['name'], self.sugar.name)
+
+    def test_get_ingredient_detail(self):
+        url = reverse('ingredients-detail', args=(self.salt.pk,))
+
+        resp = self.client_non_auth.get(url)
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.salt.id, resp.data.get('id'))
+
+
 class IngredientTestCase(TestCase):
         @classmethod
         def setUpClass(cls):
