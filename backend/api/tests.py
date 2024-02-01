@@ -31,42 +31,24 @@ class UsersTestCase(TestCase):
                                  email='user2@email.ru',
                                  first_name='first_name2',
                                  last_name='last_name2',
-                                 password='')
+                                 )
+        self.expected = User.objects.create_user(username='user3',
+                                 email='user3@email.ru',
+                                 first_name='first_name3',
+                                 last_name='last_name3',
+                                 )
 
     def test_pagination_users_list(self):
         url = reverse('users-list')
-        resp = self.client_auth.get(url)
-
         params = {
-            "page": 3,
+            "page": 2,
             "limit": 2,
         }
-        # resp = self.client_auth.get(url)
-        # resp = self.client_auth.get(url, data=params)
-        # self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        #
-        # self.assertEqual(len(resp.results), 1)
-        # self.assertEqual(resp.results[0]['username'], user5.username)
-
-    def test_get_filtered_list(self):
-        url = reverse('ingredients-list')
-
-        params = {
-            "name": "Sug",
-        }
-
         resp = self.client_auth.get(url, data=params)
-
-        self.assertEqual(len(resp.data), 1)
-        self.assertEqual(resp.data[0]['name'], self.sugar.name)
-
-    def test_get_ingredient_detail(self):
-        url = reverse('ingredients-detail', args=(self.salt.pk,))
-
-        resp = self.client_non_auth.get(url)
-
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(self.salt.id, resp.data.get('id'))
+        self.assertEqual(len(resp.data['results']), 1)
+        self.assertEqual(resp.data['results'][0]['username'], self.expected.username)
+
 
 
 class IngredientTestCase(TestCase):
@@ -184,7 +166,8 @@ class RecipeTestCase(TestCase):
         self.recipe = Recipe.objects.create(
             name='soup',
             author=self.user,
-            text='some_text'
+            text='some_text',
+            cooking_time=1
         )
         self.tag_black = Tag.objects.create(name='black', slug='black')
         self.tag_white = Tag.objects.create(name='white', slug='white')
@@ -223,6 +206,7 @@ class RecipeTestCase(TestCase):
             "ingredients": [{'id': self.salt.id, 'amount': '22'}, ],
             "tags": [self.tag_white.pk, self.tag_black.pk, ],
             "author": self.user.pk,
+            "cooking_time": 1,
         }
 
         resp = self.client_auth.post(url, data=data)
@@ -236,6 +220,7 @@ class RecipeTestCase(TestCase):
             "ingredients": [{'id': self.salt.id, 'amount': '21'}, ],
             "tags": [self.tag_white.pk, self.tag_black.pk, ],
             "author": self.user.pk,
+            "cooking_time": 1,
         }
 
         resp = self.client_non_auth.patch(url, data=data)
@@ -269,7 +254,8 @@ class FavoriteTestCase(TestCase):
         self.recipe = Recipe.objects.create(
             name='soup',
             author=self.user,
-            text='some_text'
+            text='some_text',
+            cooking_time=1
         )
         self.tag_black = Tag.objects.create(name='black', slug='black')
         self.recipe.tags.add(self.tag_black)

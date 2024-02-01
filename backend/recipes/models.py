@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
@@ -62,7 +63,7 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='Автор')
     name = models.CharField(
-        max_length=200,
+        max_length=MAX_LEN_STRING,
         verbose_name='Название рецепта')
     text = models.TextField(verbose_name='Текст')
     ingredients = models.ManyToManyField(
@@ -74,6 +75,15 @@ class Recipe(models.Model):
         Tag,
         related_name='recipes',
         verbose_name='Теги',
+    )
+    image = models.ImageField(
+        'Изображение',
+        upload_to='recipes/',
+        null=True,
+    )
+    cooking_time = models.PositiveSmallIntegerField(
+        'Время приготовления',
+        validators=[MinValueValidator(1, message='Минимальное значение 1!')]
     )
 
     def __str__(self):
@@ -124,4 +134,3 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f'{self.recipe} в избранном у {self.user}'
-
