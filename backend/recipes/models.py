@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 
+MAX_LEN_STRING = 200
+
 User = get_user_model()
 
 
@@ -15,12 +17,17 @@ class Smoke(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200, verbose_name='Название')
+    """Ingredients for recipes"""
+    name = models.CharField(
+        max_length=MAX_LEN_STRING,
+        verbose_name='Название')
     measurement_unit = models.CharField(
-        max_length=200, verbose_name='Единицы измерения'
+        max_length=MAX_LEN_STRING,
+        verbose_name='Единица измерения'
     )
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
 
@@ -29,17 +36,28 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    # Отображается в UI
+    """Tags for recipes"""
     name = models.CharField(
-        max_length=200, verbose_name='Название', unique=True
+        max_length=MAX_LEN_STRING,
+        verbose_name='Название',
+        unique=True
     )
-    # Для фильтраций
     slug = models.SlugField(
-        max_length=200, null=True, verbose_name='Слаг', unique=True
+        max_length=MAX_LEN_STRING,
+        null=True,
+        verbose_name='Уникальный слаг',
+        unique=True
+    )
+    color = models.CharField(
+        max_length=7,
+        null=True,
+        verbose_name="Цвет в HEX",
     )
 
     class Meta:
-        ordering = ['id']
+        ordering = ['name']
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
 
     def __str__(self):
         return self.name

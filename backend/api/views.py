@@ -1,12 +1,15 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-from api.permissions import IsOwnerOrReadOnly
+from api.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
                              RecipeListSerializer, TagSerializer,
                              FavoriteSerializer, RecipeCreateUpdateSerializer)
-from recipes.models import Ingredient, Smoke, Recipe, Tag, Favorite
+from recipes.models import Ingredient, Recipe, Tag, Favorite
+
+from .filters import IngredientFilter
 
 
 class CustomPagination(PageNumberPagination):
@@ -17,17 +20,11 @@ class CustomPagination(PageNumberPagination):
 
 
 class IngredientViewSet(ModelViewSet):
+    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    pagination_class = None
-    http_method_names = ['get']
-
-    def get_queryset(self):
-        # Пример, как доставать параметры из url, и использовать их.
-        qs = Ingredient.objects.all()
-        name = self.request.query_params.get('name')
-        if name:
-            qs = qs.filter(name__istartswith=name)
-        return qs.all()
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class RecipesViewSet(ModelViewSet):
@@ -58,7 +55,7 @@ class RecipesViewSet(ModelViewSet):
 class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAdminOrReadOnly, ]
 
 
 class FavoriteViewSet(ModelViewSet):

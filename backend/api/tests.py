@@ -11,28 +11,90 @@ from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe,
 User = get_user_model()
 
 
-class TestCaseIngredient(TestCase):
+class IngredientTestCase(TestCase):
+        @classmethod
+        def setUpClass(cls):
+            super().setUpClass()
+
+        def setUp(self) -> None:
+            self.client_non_auth = APIClient()
+
+            self.client_auth = APIClient()
+            self.user = User.objects.create_user(username='user')
+            token = Token.objects.get_or_create(user=self.user)
+            self.client_auth.force_authenticate(user=self.user,
+                                                token=token)
+            self.salt = Ingredient.objects.create(
+                name='Salt',
+                measurement_unit='kg',
+            )
+            self.sugar = Ingredient.objects.create(
+                name='Sugar',
+                measurement_unit='kg',
+            )
+
+        def test_get_ingredient_list(self):
+            url = reverse('ingredients-list')
+
+            resp = self.client_non_auth.get(url)
+            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+            resp = self.client_auth.get(url)
+            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        def test_get_filtered_list(self):
+            url = reverse('ingredients-list')
+
+            params = {
+                "name": "Sug",
+            }
+
+            resp = self.client_auth.get(url, data=params)
+
+            self.assertEqual(len(resp.data), 1)
+            self.assertEqual(resp.data[0]['name'], self.sugar.name)
+
+        def test_get_ingredient_detail(self):
+            url = reverse('ingredients-detail', args=(self.salt.pk,))
+
+            resp = self.client_non_auth.get(url)
+
+            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+            self.assertEqual(self.salt.id, resp.data.get('id'))
+
+
+class TagTestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
 
     def setUp(self) -> None:
-        self.client = Client()
-        self.user = User.objects.create_user(username='admin')
-        self.ingredient = Ingredient.objects.create(
-            name='salt',
-            measurement_unit='gr',
-        )
-        self.client.force_login(user=self.user)
+        self.client_non_auth = APIClient()
 
-    def test_list(self):
-        url = reverse('ingredients-list')
-        print(url)
-        # /api/v1/ingredients/
+        self.client_auth = APIClient()
+        self.user = User.objects.create_user(username='user')
+        token = Token.objects.get_or_create(user=self.user)
+        self.client_auth.force_authenticate(user=self.user,
+                                            token=token)
+        self.tag = Tag.objects.create(name='Завтрак', color='#E26C2D', slug='breakfast')
 
-        resp = self.client.get(url)
+    def test_get_tag_list(self):
+        url = reverse('tags-list')
 
-        print(resp.data)
-        # [OrderedDict(
-        # [('id', 1), ('name', 'salt'), ('measurement_unit', 'gr')])
-        # ]
+        resp = self.client_non_auth.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.client_auth.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_get_tag_detail(self):
+        url = reverse('tags-detail', args=(self.tag.pk,))
+
+        resp = self.client_non_auth.get(url)
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tag.id, resp.data.get('id'))
 
 
 class RecipeTestCase(TestCase):
