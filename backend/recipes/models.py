@@ -1,19 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-
+from django.db.models import UniqueConstraint
 
 MAX_LEN_STRING = 200
 
 User = get_user_model()
-
-
-class Smoke(models.Model):
-    name = models.CharField(max_length=200, verbose_name='Название')
-    count = models.PositiveSmallIntegerField()
-    created = models.DateField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
 
 
 class Ingredient(models.Model):
@@ -64,6 +55,7 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
+    """Recipes model"""
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -89,6 +81,7 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
+    """Ingredient in recipes"""
     amount = models.PositiveIntegerField(
         verbose_name='Количество'
     )
@@ -108,6 +101,7 @@ class RecipeIngredient(models.Model):
 
 
 class Favorite(models.Model):
+    """Model to add recipes to favorite"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -121,5 +115,13 @@ class Favorite(models.Model):
         verbose_name='Рецепт'
     )
 
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+        constraints = [
+            UniqueConstraint(fields=['user', 'recipe'], name='unique_favourite')
+        ]
+
     def __str__(self):
-        return f'Избранный {self.recipe} у {self.user}'
+        return f'{self.recipe} в избранном у {self.user}'
+

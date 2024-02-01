@@ -1,13 +1,18 @@
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
                              RecipeListSerializer, TagSerializer,
-                             FavoriteSerializer, RecipeCreateUpdateSerializer)
+                             ShortRecipeSerializer, RecipeCreateUpdateSerializer,
+                             CustomUserSerializer)
 from djoser.views import UserViewSet
 from recipes.models import Ingredient, Recipe, Tag, Favorite
 
@@ -22,64 +27,20 @@ class CustomPagination(PageNumberPagination):
 
 class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
-    # permission_classes = (IsAdminOrReadOnly,)
+    serializer_class = CustomUserSerializer
+    pagination_class = CustomPagination
 
-
-
-
-    # pagination_class = CustomPagination
-
-    # add_serializer = UserSubscribeSerializer
-    # link_model = Subscriptions
-
-    # @action(detail=True, permission_classes=(IsAuthenticated,))
-    # def subscribe(self, request: WSGIRequest, id: int | str) -> Response:
-    #     """Создаёт/удалет связь между пользователями.
-    #
-    #     Вызов метода через url: */user/<int:id>/subscribe/.
-    #
-    #     Args:
-    #         request (WSGIRequest): Объект запроса.
-    #         id (int):
-    #             id пользователя, на которого желает подписаться
-    #             или отписаться запрашивающий пользователь.
-    #
-    #     Returns:
-    #         Responce: Статус подтверждающий/отклоняющий действие.
-    #     """
-    #
-    # @subscribe.mapping.post
-    # def create_subscribe(
-    #     self, request: WSGIRequest, id: int | str
-    # ) -> Response:
-    #     return self._create_relation(id)
-    #
-    # @subscribe.mapping.delete
-    # def delete_subscribe(
-    #     self, request: WSGIRequest, id: int | str
-    # ) -> Response:
-    #     return self._delete_relation(Q(author__id=id))
-    #
     # @action(
-    #     methods=("get",), detail=False, permission_classes=(IsAuthenticated,)
+    #     detail=False,
+    #     permission_classes=[IsAuthenticated]
     # )
-    # def subscriptions(self, request: WSGIRequest) -> Response:
-    #     """Список подписок пользоваетеля.
-    #
-    #     Вызов метода через url: */user/<int:id>/subscribtions/.
-    #
-    #     Args:
-    #         request (WSGIRequest): Объект запроса.
-    #
-    #     Returns:
-    #         Responce:
-    #             401 - для неавторизованного пользователя.
-    #             Список подписок для авторизованного пользователя.
-    #     """
-    #     pages = self.paginate_queryset(
-    #         User.objects.filter(subscribers__user=self.request.user)
-    #     )
-    #     serializer = UserSubscribeSerializer(pages, many=True)
+    # def subscriptions(self, request):
+    #     user = request.user
+    #     queryset = User.objects.filter(subscribing__user=user)
+    #     pages = self.paginate_queryset(queryset)
+    #     serializer = FavoriteSerializer(pages,
+    #                                     many=True,
+    #                                     context={'request': request})
     #     return self.get_paginated_response(serializer.data)
 
 
@@ -93,7 +54,6 @@ class IngredientViewSet(ModelViewSet):
 
 class RecipesViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
-    http_method_names = ['get', 'post', 'patch', ]
     permission_classes = (IsOwnerOrReadOnly, )
     pagination_class = CustomPagination
 
@@ -105,15 +65,44 @@ class RecipesViewSet(ModelViewSet):
             return RecipeListSerializer
         return RecipeCreateUpdateSerializer
 
-    # def get_queryset(self):
-    #     qs = Recipe.objects.add_user_annotations(self.request.user.pk)
-    #
-    #     # Фильтры из GET-параметров запроса, например.
-    #     author = self.request.query_params.get('author', None)
-    #     if author:
-    #         qs = qs.filter(author=author)
-    #
-    #     return qs
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
+    )
+    def favorite(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
+        if request.method == 'POST':
+            return self.add_to(Favorite, request.user, recipe)
+        else:
+            return self.delete_from(Favorite, request.user, recipe)
+
+    # @action(
+    #     detail=True,
+    #     methods=['post', 'delete'],
+    #     permission_classes=[IsAuthenticated]
+    # )
+    # def shopping_cart(self, request, pk):
+    #     if request.method == 'POST':
+    #         return self.add_to(ShoppingCart, request.user, pk)
+    #     else:
+    #         return self.delete_from(ShoppingCart, request.user, pk)
+
+    def add_to(self, model, user, recipe):
+        if model.objects.filter(user=user, recipe=recipe).exists():
+            return Response({'errors': 'Рецепт уже добавлен!'}, status=status.HTTP_400_BAD_REQUEST)
+        model.objects.create(user=user, recipe=recipe)
+        serializer = ShortRecipeSerializer(recipe)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete_from(self, model, user, recipe):
+        obj = model.objects.filter(user=user, recipe=recipe)
+        if obj.exists():
+            obj.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'errors': 'Рецепт уже удален!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 class TagViewSet(ModelViewSet):
@@ -122,7 +111,7 @@ class TagViewSet(ModelViewSet):
     permission_classes = [IsAdminOrReadOnly, ]
 
 
-class FavoriteViewSet(ModelViewSet):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
-    permission_classes = [IsAuthenticated, ]
+# class FavoriteViewSet(ModelViewSet):
+#     queryset = Favorite.objects.all()
+#     serializer_class = FavoriteSerializer
+#     permission_classes = [IsAuthenticated, ]

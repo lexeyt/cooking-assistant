@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from django.shortcuts import get_object_or_404
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import IntegerField, SerializerMethodField
 
 from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe,
@@ -162,25 +166,17 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         fields = ('name', 'ingredients', 'text', 'tags')
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        # read_only=True,
-    )
-    user_slug = serializers.SlugRelatedField(
-        queryset=User.objects.all(),
-        slug_field='username',
-        source='user',
-        # read_only=True,
-    )
-    user_string = serializers.StringRelatedField(
-        # queryset=User.objects.all(),
-        source='user',
-    )
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    #image = Base64ImageField()
 
     class Meta:
-        model = Favorite
-        fields = '__all__'
-        # Можно указать поле, только для чтения.
-        # read_only = ('user', 'user_slug')
-        # read_only = ('user', )
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            #'image',
+            # 'cooking_time'
+        )
+
+
+
