@@ -1,6 +1,7 @@
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import UniqueConstraint
 
 MAX_LEN_STRING = 150
 
@@ -36,8 +37,33 @@ class User(AbstractUser):
         verbose_name_plural = "Пользователи"
         ordering = ("username",)
 
-    def __str__(self) -> str:
-        return f"{self.username}: {self.email}"
+    def __str__(self):
+        return f'{self.username}: {self.first_name} - {self.last_name}'
 
 
+class Subscribe(models.Model):
+    """Subscribe to another user"""
 
+    user = models.ForeignKey(
+        User,
+        related_name='authors',
+        verbose_name='Подписчик',
+        on_delete=models.CASCADE,
+    )
+    author = models.ForeignKey(
+        User,
+        related_name='subscribers',
+        verbose_name='Автор рецепта',
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        ordering = ['-id']
+        constraints = [
+            UniqueConstraint(fields=['user', 'author'], name='unique_subscription')
+        ]
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return f'{self.user} подписан на {self.author}'

@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 
 from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe,
                             Favorite)
+from users.models import Subscribe
 
 User = get_user_model()
 
@@ -18,25 +19,57 @@ class UsersTestCase(TestCase):
 
     def setUp(self) -> None:
         self.client_auth = APIClient()
-        self.user = User.objects.create_user(username='user1',
+        self.user1 = User.objects.create_user(username='user1',
                                              email='user1@email.ru',
                                              first_name='first_name1',
                                              last_name='last_name1',
                                              password='')
-        token = Token.objects.get_or_create(user=self.user)
-        self.client_auth.force_authenticate(user=self.user,
+        token = Token.objects.get_or_create(user=self.user1)
+        self.client_auth.force_authenticate(user=self.user1,
                                             token=token)
 
-        User.objects.create_user(username='user2',
+        self.user2 = User.objects.create_user(username='user2',
                                  email='user2@email.ru',
                                  first_name='first_name2',
                                  last_name='last_name2',
                                  )
-        self.expected = User.objects.create_user(username='user3',
+        self.user3 = User.objects.create_user(username='user3',
                                  email='user3@email.ru',
                                  first_name='first_name3',
                                  last_name='last_name3',
                                  )
+
+        self.salt = Ingredient.objects.create(
+            name='Salt',
+            measurement_unit='kg',
+        )
+        self.recipe = Recipe.objects.create(
+            name='soup',
+            author=self.user2,
+            text='some_text',
+            cooking_time=1
+        )
+        self.tag_black = Tag.objects.create(name='black', slug='black')
+        self.recipe.tags.add(self.tag_black)
+
+        self.ingredient_recipe = RecipeIngredient.objects.create(
+            recipe=self.recipe,
+            ingredient=self.salt,
+            amount=100,
+        )
+        self.recipe2 = Recipe.objects.create(
+            name='red soup',
+            author=self.user2,
+            text='some_text',
+            cooking_time=1
+        )
+        self.recipe2.tags.add(self.tag_black)
+
+        RecipeIngredient.objects.create(
+            recipe=self.recipe2,
+            ingredient=self.salt,
+            amount=100,
+        )
 
     def test_pagination_users_list(self):
         url = reverse('users-list')
@@ -47,7 +80,23 @@ class UsersTestCase(TestCase):
         resp = self.client_auth.get(url, data=params)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(len(resp.data['results']), 1)
-        self.assertEqual(resp.data['results'][0]['username'], self.expected.username)
+        self.assertEqual(resp.data['results'][0]['username'], self.user3.username)
+
+    def test_subscriptions(self):
+        url = reverse('users-subscribe', args=(self.user2.pk,))
+        params = {
+            "recipes_limit": 1,
+        }
+        resp = self.client_auth.post(url, data=params)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        self.assertEqual(len(resp.data['recipes']), 1)
+        self.assertEqual(resp.data['recipes_count'], 2)
+        self.assertTrue(resp.data['is_subscribed'])
+
+        resp = self.client_auth.delete(url)
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(Subscribe.objects.all()), 0)
 
 
 
