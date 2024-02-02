@@ -12,7 +12,7 @@ from api.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
                              RecipeListSerializer, TagSerializer,
                              ShortRecipeSerializer, RecipeCreateUpdateSerializer,
-                             CustomUserSerializer, SubscribeSerializer)
+                             CustomUserSerializer, SubscribeSerializer, SubscriptionsSerializer)
 from djoser.views import UserViewSet
 from recipes.models import Ingredient, Recipe, Tag, Favorite
 from users.models import Subscribe
@@ -33,13 +33,14 @@ class CustomUserViewSet(UserViewSet):
 
     @action(
         detail=False,
-        permission_classes=[IsAuthenticated]
+        permission_classes=[IsAuthenticated],
     )
     def subscriptions(self, request):
         queryset = User.objects.filter(subscribers__user=request.user)
-        serializer = SubscribeSerializer(self.paginate_queryset(queryset),
-                                         many=True,
-                                         context={'request': request})
+        pages = self.paginate_queryset(queryset=queryset)
+        serializer = SubscriptionsSerializer(pages,
+                                             context={'request': request},
+                                             many=True)
         return self.get_paginated_response(serializer.data)
 
     @action(

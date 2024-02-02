@@ -89,11 +89,21 @@ class UsersTestCase(TestCase):
         }
         resp = self.client_auth.post(url, data=params)
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-
         self.assertEqual(len(resp.data['recipes']), 1)
         self.assertEqual(resp.data['recipes_count'], 2)
         self.assertTrue(resp.data['is_subscribed'])
 
+        url = reverse('users-subscriptions')
+        params = {
+            "page": 1,
+            "limit": 10,
+            "recipes_limit": 1,
+        }
+        resp = self.client_auth.get(url, data=params)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resp.data['results']), 1)
+
+        url = reverse('users-subscribe', args=(self.user2.pk,))
         resp = self.client_auth.delete(url)
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(Subscribe.objects.all()), 0)
