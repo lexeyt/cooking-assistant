@@ -18,6 +18,7 @@ class UsersTestCase(TestCase):
         super().setUpClass()
 
     def setUp(self) -> None:
+        self.client_non_auth = APIClient()
         self.client_auth = APIClient()
         self.user1 = User.objects.create_user(username='user1',
                                              email='user1@email.ru',
@@ -71,7 +72,7 @@ class UsersTestCase(TestCase):
             amount=100,
         )
 
-    def test_pagination_users_list(self):
+    def test_paginatied_users_list(self):
         url = reverse('users-list')
         params = {
             "page": 2,
@@ -81,6 +82,20 @@ class UsersTestCase(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(len(resp.data['results']), 1)
         self.assertEqual(resp.data['results'][0]['username'], self.user3.username)
+
+    def test_register_new_user(self):
+        url = reverse('users-list')
+        params = {
+            "email": "vpupkin@yandex.ru",
+            "username": "vasyapupkin",
+            "first_name": "Вася",
+            "last_name": "Пупкин",
+            "password": "dfkgjmbFDG5er#$%"
+            }
+
+        resp = self.client_non_auth.post(url, data=params)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(User.objects.filter(email=params['email']).exists())
 
     def test_subscriptions(self):
         url = reverse('users-subscribe', args=(self.user2.pk,))

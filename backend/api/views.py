@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from rest_framework.permissions import AllowAny, SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -32,6 +32,7 @@ class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
     pagination_class = CustomPagination
+    permission_classes = (AllowAny,)
 
     @action(
         detail=False,
@@ -44,18 +45,6 @@ class CustomUserViewSet(UserViewSet):
                                              context={'request': request},
                                              many=True)
         return self.get_paginated_response(serializer.data)
-
-    @action(
-        detail=True,
-        methods=['post', 'delete'],
-        permission_classes=[IsAuthenticated]
-    )
-    def favorite(self, request, pk):
-        recipe = get_object_or_404(Recipe, id=pk)
-        if request.method == 'POST':
-            return self.add_to(Favorite, request.user, recipe)
-        else:
-            return self.delete_from(Favorite, request.user, recipe)
 
     @action(
         detail=True,

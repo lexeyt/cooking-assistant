@@ -32,10 +32,13 @@ class User(AbstractUser):
         max_length=MAX_LEN_STRING,
     )
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name', 'password')
+
     class Meta:
+        ordering = ("username",)
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
-        ordering = ("username",)
 
     def __str__(self):
         return f'{self.username}: {self.first_name} - {self.last_name}'
