@@ -24,7 +24,7 @@ class UsersTestCase(TestCase):
                                              email='user1@email.ru',
                                              first_name='first_name1',
                                              last_name='last_name1',
-                                             password='')
+                                             password='dghbdrtyu$%6reG')
         token = Token.objects.get_or_create(user=self.user1)
         self.client_auth.force_authenticate(user=self.user1,
                                             token=token)
@@ -96,6 +96,27 @@ class UsersTestCase(TestCase):
         resp = self.client_non_auth.post(url, data=params)
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         self.assertTrue(User.objects.filter(email=params['email']).exists())
+
+    def test_users_detail(self):
+        url = reverse('users-detail', args=(self.user1.id,))
+
+        resp = self.client_auth.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_users_me(self):
+        url = reverse('users-me')
+
+        resp = self.client_auth.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_change_password(self):
+        url = reverse('users-set-password')
+        params = {
+            "new_password": "dflgvjm56456@$%r",
+            "current_password": "dghbdrtyu$%6reG",
+        }
+        resp = self.client_auth.post(url, data=params)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     def test_subscriptions(self):
         url = reverse('users-subscribe', args=(self.user2.pk,))

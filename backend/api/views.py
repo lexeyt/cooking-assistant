@@ -13,7 +13,8 @@ from api.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
                              RecipeListSerializer, TagSerializer,
                              ShortRecipeSerializer, RecipeCreateUpdateSerializer,
-                             CustomUserSerializer, SubscribeSerializer, SubscriptionsSerializer)
+                             CustomUserSerializer, SubscribeSerializer, SubscriptionsSerializer,
+                             PasswordSerializer)
 from djoser.views import UserViewSet
 from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
 from users.models import Subscribe
@@ -33,6 +34,35 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = CustomUserSerializer
     pagination_class = CustomPagination
     permission_classes = (AllowAny,)
+
+    @action(
+        methods=['get'],
+        detail=False,
+        permission_classes=(IsAuthenticated,),
+    )
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        methods=['post'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+    )
+    def set_password(self, request):
+        user = request.user
+        serializer = PasswordSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        old_password = serializer.validated_data.get('current_password')
+        new_password = serializer.validated_data.get('new_password')
+        if not user.check_password(old_password):
+            return Response(
+                'Неверный пароль',
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user.set_password(new_password)
+        user.save()
+        return Response('Пароль успешно изменен', status=status.HTTP_200_OK)
 
     @action(
         detail=False,

@@ -20,6 +20,11 @@ class CustomUserCreateSerializer(UserCreateSerializer):
                   'first_name', 'last_name', 'password')
 
 
+class PasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+
+
 class CustomUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
@@ -184,15 +189,15 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
-    #image = Base64ImageField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
             'id',
             'name',
-            #'image',
-            # 'cooking_time'
+            'image',
+            'cooking_time'
         )
 
 
