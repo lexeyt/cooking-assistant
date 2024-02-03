@@ -6,7 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe,
-                            Favorite)
+                            Favorite,ShoppingCart)
 from users.models import Subscribe
 
 User = get_user_model()
@@ -336,3 +336,53 @@ class FavoriteTestCase(TestCase):
         resp = self.client_auth.delete(url)
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(Favorite.objects.all()), 0)
+
+
+class ShoppingCartTestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+
+    def setUp(self) -> None:
+        self.client_non_auth = APIClient()
+
+        self.client_auth = APIClient()
+        self.user = User.objects.create_user(username='user')
+        token = Token.objects.get_or_create(user=self.user)
+        self.client_auth.force_authenticate(user=self.user,
+                                            token=token)
+
+        self.salt = Ingredient.objects.create(
+            name='Salt',
+            measurement_unit='kg',
+        )
+        self.recipe = Recipe.objects.create(
+            name='soup',
+            author=self.user,
+            text='some_text',
+            cooking_time=1
+        )
+        self.tag_black = Tag.objects.create(name='black', slug='black')
+        self.recipe.tags.add(self.tag_black)
+
+        self.ingredient_recipe = RecipeIngredient.objects.create(
+            recipe=self.recipe,
+            ingredient=self.salt,
+            amount=100,
+        )
+
+    def test_ShoppingCart(self):
+        url = reverse('recipes-shopping-cart', args=(self.recipe.pk,))
+
+        resp = self.client_auth.post(url)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(ShoppingCart.objects.all()), 1)
+
+        resp = self.client_auth.post(url)
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+        resp = self.client_auth.delete(url)
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(ShoppingCart.objects.all()), 0)

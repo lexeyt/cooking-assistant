@@ -14,7 +14,7 @@ from api.serializers import (IngredientSerializer,
                              ShortRecipeSerializer, RecipeCreateUpdateSerializer,
                              CustomUserSerializer, SubscribeSerializer, SubscriptionsSerializer)
 from djoser.views import UserViewSet
-from recipes.models import Ingredient, Recipe, Tag, Favorite
+from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
 from users.models import Subscribe
 
 from .filters import IngredientFilter
@@ -55,16 +55,6 @@ class CustomUserViewSet(UserViewSet):
         else:
             return self.delete_from(Favorite, request.user, recipe)
 
-    # @action(
-    #     detail=True,
-    #     methods=['post', 'delete'],
-    #     permission_classes=[IsAuthenticated]
-    # )
-    # def shopping_cart(self, request, pk):
-    #     if request.method == 'POST':
-    #         return self.add_to(ShoppingCart, request.user, pk)
-    #     else:
-    #         return self.delete_from(ShoppingCart, request.user, pk)
     @action(
         detail=True,
         methods=['post', 'delete'],
@@ -120,29 +110,30 @@ class RecipesViewSet(ModelViewSet):
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
         if request.method == 'POST':
-            return self.add_to(Favorite, request.user, recipe)
+            return self.add_relation(Favorite, request.user, recipe)
         else:
-            return self.delete_from(Favorite, request.user, recipe)
+            return self.remove_relation(Favorite, request.user, recipe)
 
-    # @action(
-    #     detail=True,
-    #     methods=['post', 'delete'],
-    #     permission_classes=[IsAuthenticated]
-    # )
-    # def shopping_cart(self, request, pk):
-    #     if request.method == 'POST':
-    #         return self.add_to(ShoppingCart, request.user, pk)
-    #     else:
-    #         return self.delete_from(ShoppingCart, request.user, pk)
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
+    )
+    def shopping_cart(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
+        if request.method == 'POST':
+            return self.add_relation(ShoppingCart, request.user, recipe)
+        else:
+            return self.remove_relation(ShoppingCart, request.user, recipe)
 
-    def add_to(self, model, user, recipe):
+    def add_relation(self, model, user, recipe):
         if model.objects.filter(user=user, recipe=recipe).exists():
             return Response({'errors': 'Рецепт уже добавлен!'}, status=status.HTTP_400_BAD_REQUEST)
         model.objects.create(user=user, recipe=recipe)
         serializer = ShortRecipeSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def delete_from(self, model, user, recipe):
+    def remove_relation(self, model, user, recipe):
         obj = model.objects.filter(user=user, recipe=recipe)
         if obj.exists():
             obj.delete()
