@@ -300,7 +300,6 @@ class RecipeTestCase(TestCase):
             "text": "Сварить",
             "ingredients": [{'id': self.salt.id, 'amount': '22'}, ],
             "tags": [self.tag_white.pk, self.tag_black.pk, ],
-            "author": self.user.pk,
             "cooking_time": 1,
         }
 
@@ -314,7 +313,6 @@ class RecipeTestCase(TestCase):
             "text": "Сварганить",
             "ingredients": [{'id': self.salt.id, 'amount': '21'}, ],
             "tags": [self.tag_white.pk, self.tag_black.pk, ],
-            "author": self.user.pk,
             "cooking_time": 1,
         }
 
