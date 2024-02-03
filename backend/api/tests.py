@@ -386,3 +386,22 @@ class ShoppingCartTestCase(TestCase):
         resp = self.client_auth.delete(url)
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(ShoppingCart.objects.all()), 0)
+
+    def test_ShoppingCart(self):
+        url = reverse('recipes-shopping-cart', args=(self.recipe.pk,))
+
+        resp = self.client_auth.post(url)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(ShoppingCart.objects.all()), 1)
+
+        resp = self.client_auth.post(url)
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+        url = reverse('recipes-download-shopping-cart')
+        resp = self.client_auth.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        url = reverse('recipes-shopping-cart', args=(self.recipe.pk,))
+        resp = self.client_auth.delete(url)
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(ShoppingCart.objects.all()), 0)

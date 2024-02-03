@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -18,6 +19,7 @@ from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
 from users.models import Subscribe
 
 from .filters import IngredientFilter
+from .utils import ingredients_in_cart
 
 User = get_user_model()
 
@@ -139,6 +141,20 @@ class RecipesViewSet(ModelViewSet):
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response({'errors': 'Рецепт уже удален!'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated]
+    )
+    def download_shopping_cart(self, request):
+        cart = ShoppingCart.objects.filter(user=self.request.user)
+        file = ingredients_in_cart(cart)
+        response = HttpResponse(file, content_type="text/plain")
+        response['Content-Disposition'] = (
+            'attachment; filename=shopping-list.txt'
+        )
+        return response
 
 
 class TagViewSet(ModelViewSet):
