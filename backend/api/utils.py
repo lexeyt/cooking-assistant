@@ -15,7 +15,9 @@ def ingredients_in_cart(shopping_cart):
     )
     ingredients_in_cart = 'Shopping list:\n'
     for ingredient in ingredients:
-          ingredients_in_cart += (
-            f'{ingredient["ingredient__name"]} - {ingredient["amount"]} {ingredient["ingredient__measurement_unit"]}\n'
-        )
+        ingredients_in_cart += (
+            f'{ingredient["ingredient__name"]}'
+            f' - {ingredient["amount"]}'
+            f' {ingredient["ingredient__measurement_unit"]}\n'
+            )
     return ingredients_in_cart

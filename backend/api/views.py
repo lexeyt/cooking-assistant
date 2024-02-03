@@ -12,9 +12,9 @@ from rest_framework.viewsets import ModelViewSet
 from api.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
                              RecipeListSerializer, TagSerializer,
-                             ShortRecipeSerializer, RecipeCreateUpdateSerializer,
-                             CustomUserSerializer, SubscribeSerializer, SubscriptionsSerializer,
-                             PasswordSerializer)
+                             ShortRecipeSerializer, RecipeCreateSerializer,
+                             CustomUserSerializer, SubscribeSerializer,
+                             SubscriptionsSerializer, PasswordSerializer)
 from djoser.views import UserViewSet
 from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
 from users.models import Subscribe
@@ -121,7 +121,7 @@ class RecipesViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return RecipeListSerializer
-        return RecipeCreateUpdateSerializer
+        return RecipeCreateSerializer
 
     @action(
         detail=True,
@@ -149,7 +149,8 @@ class RecipesViewSet(ModelViewSet):
 
     def add_relation(self, model, user, recipe):
         if model.objects.filter(user=user, recipe=recipe).exists():
-            return Response({'errors': 'Рецепт уже добавлен!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'errors': 'Рецепт уже добавлен!'},
+                            status=status.HTTP_400_BAD_REQUEST)
         model.objects.create(user=user, recipe=recipe)
         serializer = ShortRecipeSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -159,7 +160,8 @@ class RecipesViewSet(ModelViewSet):
         if obj.exists():
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response({'errors': 'Рецепт уже удален!'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'errors': 'Рецепт уже удален!'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=False,
@@ -180,4 +182,3 @@ class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [IsAdminOrReadOnly, ]
-

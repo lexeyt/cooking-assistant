@@ -1,12 +1,12 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase, Client
 from django.urls import reverse
+from django.test import TestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe,
-                            Favorite,ShoppingCart)
+                            Favorite, ShoppingCart)
 from users.models import Subscribe
 
 User = get_user_model()
@@ -20,25 +20,26 @@ class UsersTestCase(TestCase):
     def setUp(self) -> None:
         self.client_non_auth = APIClient()
         self.client_auth = APIClient()
-        self.user1 = User.objects.create_user(username='user1',
-                                             email='user1@email.ru',
-                                             first_name='first_name1',
-                                             last_name='last_name1',
-                                             password='dghbdrtyu$%6reG')
+        self.user1 = User.objects.create_user(
+            username='user1',
+            email='user1@email.ru',
+            first_name='first_name1',
+            last_name='last_name1',
+            password='dghbdrtyu$%6reG')
         token = Token.objects.get_or_create(user=self.user1)
         self.client_auth.force_authenticate(user=self.user1,
                                             token=token)
 
-        self.user2 = User.objects.create_user(username='user2',
-                                 email='user2@email.ru',
-                                 first_name='first_name2',
-                                 last_name='last_name2',
-                                 )
-        self.user3 = User.objects.create_user(username='user3',
-                                 email='user3@email.ru',
-                                 first_name='first_name3',
-                                 last_name='last_name3',
-                                 )
+        self.user2 = User.objects.create_user(
+            username='user2',
+            email='user2@email.ru',
+            first_name='first_name2',
+            last_name='last_name2')
+        self.user3 = User.objects.create_user(
+            username='user3',
+            email='user3@email.ru',
+            first_name='first_name3',
+            last_name='last_name3')
 
         self.salt = Ingredient.objects.create(
             name='Salt',
@@ -81,7 +82,8 @@ class UsersTestCase(TestCase):
         resp = self.client_auth.get(url, data=params)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(len(resp.data['results']), 1)
-        self.assertEqual(resp.data['results'][0]['username'], self.user3.username)
+        self.assertEqual(resp.data['results'][0]['username'],
+                         self.user3.username)
 
     def test_register_new_user(self):
         url = reverse('users-list')
@@ -145,57 +147,53 @@ class UsersTestCase(TestCase):
         self.assertEqual(len(Subscribe.objects.all()), 0)
 
 
-
 class IngredientTestCase(TestCase):
-        @classmethod
-        def setUpClass(cls):
-            super().setUpClass()
 
-        def setUp(self) -> None:
-            self.client_non_auth = APIClient()
+    def setUp(self) -> None:
+        self.client_non_auth = APIClient()
 
-            self.client_auth = APIClient()
-            self.user = User.objects.create_user(username='user')
-            token = Token.objects.get_or_create(user=self.user)
-            self.client_auth.force_authenticate(user=self.user,
-                                                token=token)
-            self.salt = Ingredient.objects.create(
-                name='Salt',
-                measurement_unit='kg',
-            )
-            self.sugar = Ingredient.objects.create(
-                name='Sugar',
-                measurement_unit='kg',
-            )
+        self.client_auth = APIClient()
+        self.user = User.objects.create_user(username='user')
+        token = Token.objects.get_or_create(user=self.user)
+        self.client_auth.force_authenticate(user=self.user,
+                                            token=token)
+        self.salt = Ingredient.objects.create(
+            name='Salt',
+            measurement_unit='kg',
+        )
+        self.sugar = Ingredient.objects.create(
+            name='Sugar',
+            measurement_unit='kg',
+        )
 
-        def test_get_ingredient_list(self):
-            url = reverse('ingredients-list')
+    def test_get_ingredient_list(self):
+        url = reverse('ingredients-list')
 
-            resp = self.client_non_auth.get(url)
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        resp = self.client_non_auth.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-            resp = self.client_auth.get(url)
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        resp = self.client_auth.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-        def test_get_filtered_list(self):
-            url = reverse('ingredients-list')
+    def test_get_filtered_list(self):
+        url = reverse('ingredients-list')
 
-            params = {
-                "name": "Sug",
-            }
+        params = {
+             "name": "Sug",
+        }
 
-            resp = self.client_auth.get(url, data=params)
+        resp = self.client_auth.get(url, data=params)
 
-            self.assertEqual(len(resp.data), 1)
-            self.assertEqual(resp.data[0]['name'], self.sugar.name)
+        self.assertEqual(len(resp.data), 1)
+        self.assertEqual(resp.data[0]['name'], self.sugar.name)
 
-        def test_get_ingredient_detail(self):
-            url = reverse('ingredients-detail', args=(self.salt.pk,))
+    def test_get_ingredient_detail(self):
+        url = reverse('ingredients-detail', args=(self.salt.pk,))
 
-            resp = self.client_non_auth.get(url)
+        resp = self.client_non_auth.get(url)
 
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
-            self.assertEqual(self.salt.id, resp.data.get('id'))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.salt.id, resp.data.get('id'))
 
 
 class TagTestCase(TestCase):
@@ -212,7 +210,9 @@ class TagTestCase(TestCase):
         token = Token.objects.get_or_create(user=self.user)
         self.client_auth.force_authenticate(user=self.user,
                                             token=token)
-        self.tag = Tag.objects.create(name='Завтрак', color='#E26C2D', slug='breakfast')
+        self.tag = Tag.objects.create(name='Завтрак',
+                                      color='#E26C2D',
+                                      slug='breakfast')
 
     def test_get_tag_list(self):
         url = reverse('tags-list')
@@ -332,7 +332,6 @@ class FavoriteTestCase(TestCase):
     def setUpClass(cls):
         super().setUpClass()
 
-
     def setUp(self) -> None:
         self.client_non_auth = APIClient()
 
@@ -380,7 +379,6 @@ class ShoppingCartTestCase(TestCase):
     def setUpClass(cls):
         super().setUpClass()
 
-
     def setUp(self) -> None:
         self.client_non_auth = APIClient()
 
@@ -408,20 +406,6 @@ class ShoppingCartTestCase(TestCase):
             ingredient=self.salt,
             amount=100,
         )
-
-    def test_ShoppingCart(self):
-        url = reverse('recipes-shopping-cart', args=(self.recipe.pk,))
-
-        resp = self.client_auth.post(url)
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(len(ShoppingCart.objects.all()), 1)
-
-        resp = self.client_auth.post(url)
-        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-
-        resp = self.client_auth.delete(url)
-        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(len(ShoppingCart.objects.all()), 0)
 
     def test_ShoppingCart(self):
         url = reverse('recipes-shopping-cart', args=(self.recipe.pk,))

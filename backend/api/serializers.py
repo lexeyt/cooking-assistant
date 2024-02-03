@@ -1,11 +1,8 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from rest_framework import status
-from rest_framework.exceptions import ValidationError
-from rest_framework.fields import IntegerField, SerializerMethodField
+from rest_framework.fields import SerializerMethodField
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe)
@@ -131,7 +128,7 @@ class IngredientCreateInRecipeSerializer(serializers.ModelSerializer):
         fields = ('recipe', 'id', 'amount')
 
 
-class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
+class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = IngredientCreateInRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                               many=True)
