@@ -1,6 +1,6 @@
-from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
@@ -8,6 +8,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from djoser.views import UserViewSet
 
 from api.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
@@ -15,10 +16,8 @@ from api.serializers import (IngredientSerializer,
                              ShortRecipeSerializer, RecipeCreateSerializer,
                              CustomUserSerializer, SubscribeSerializer,
                              SubscriptionsSerializer, PasswordSerializer)
-from djoser.views import UserViewSet
 from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
 from users.models import Subscribe
-
 from .filters import IngredientFilter
 from .utils import ingredients_in_cart
 
