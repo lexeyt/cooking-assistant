@@ -93,7 +93,7 @@ class UsersTestCase(TestCase):
             "first_name": "Вася",
             "last_name": "Пупкин",
             "password": "dfkgjmbFDG5er#$%"
-            }
+        }
 
         resp = self.client_non_auth.post(url, data=params)
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
@@ -179,7 +179,7 @@ class IngredientTestCase(TestCase):
         url = reverse('ingredients-list')
 
         params = {
-             "name": "Sug",
+            "name": "Sug",
         }
 
         resp = self.client_auth.get(url, data=params)

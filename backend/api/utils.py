@@ -19,5 +19,5 @@ def ingredients_in_cart(shopping_cart):
             f'{ingredient["ingredient__name"]}'
             f' - {ingredient["amount"]}'
             f' {ingredient["ingredient__measurement_unit"]}\n'
-            )
+        )
     return ingredients_in_cart
