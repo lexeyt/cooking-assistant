@@ -88,8 +88,19 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
-        validators=[MinValueValidator(1, message='Минимальное значение 1!')]
+        validators=[
+            MinValueValidator(
+                Limits.MIN_VALUE_COOKING_TIME.value,
+                message=f'Минимальное значение '
+                        f'{Limits.MIN_VALUE_COOKING_TIME.value}'
+            )
+        ]
     )
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
 
     def __str__(self):
         return self.name
@@ -98,7 +109,14 @@ class Recipe(models.Model):
 class RecipeIngredient(models.Model):
     """Ingredient in recipes"""
     amount = models.PositiveIntegerField(
-        verbose_name='Количество'
+        verbose_name='Количество',
+        validators=[
+            MinValueValidator(
+                Limits.MIN_AMOUNT_INGREDIENT.value,
+                message=f'Минимальное количество '
+                        f'{Limits.MIN_AMOUNT_INGREDIENT.value}'
+            )
+        ]
     )
     ingredient = models.ForeignKey(
         Ingredient,
@@ -110,6 +128,11 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Рецепт'
     )
+
+    class Meta:
+        ordering = ['recipe', 'ingredient']
+        verbose_name = 'Ингридиент в рецепте'
+        verbose_name_plural = 'Ингридиенты в рецептах'
 
     def __str__(self):
         return f'{self.ingredient} в {self.recipe}'
