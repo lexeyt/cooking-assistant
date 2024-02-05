@@ -15,20 +15,20 @@ class User(AbstractUser):
     )
     username = models.CharField(
         verbose_name="Уникальный юзернейм",
-        max_length=Limits.MAX_LEN_CHARFIELD.value,
+        max_length=Limits.MAX_LEN_USERNAME.value,
         unique=True,
     )
     first_name = models.CharField(
         verbose_name="Имя",
-        max_length=Limits.MAX_LEN_CHARFIELD.value,
+        max_length=Limits.MAX_LEN_NAME.value,
     )
     last_name = models.CharField(
         verbose_name="Фамилия",
-        max_length=Limits.MAX_LEN_CHARFIELD.value,
+        max_length=Limits.MAX_LEN_NAME.value,
     )
     password = models.CharField(
         verbose_name="Пароль",
-        max_length=Limits.MAX_LEN_CHARFIELD.value,
+        max_length=Limits.MAX_LEN_PASSWORD.value,
     )
 
     USERNAME_FIELD = 'email'
