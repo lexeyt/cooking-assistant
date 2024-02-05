@@ -1,9 +1,10 @@
+from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
-MAX_LEN_STRING = 200
+from .enums import Limits
 
 User = get_user_model()
 
@@ -11,10 +12,10 @@ User = get_user_model()
 class Ingredient(models.Model):
     """Ingredients for recipes"""
     name = models.CharField(
-        max_length=MAX_LEN_STRING,
+        max_length=Limits.MAX_LEN_INGREDIENT_NAME.value,
         verbose_name='Название')
     measurement_unit = models.CharField(
-        max_length=MAX_LEN_STRING,
+        max_length=Limits.MAX_LEN_MEASUREMENT_UNIT_NAME.value,
         verbose_name='Единица измерения'
     )
 
@@ -22,6 +23,11 @@ class Ingredient(models.Model):
         ordering = ['name']
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_name_measurement_unit')
+        ]
 
     def __str__(self):
         return f'{self.name} ({self.measurement_unit})'
@@ -30,19 +36,18 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     """Tags for recipes"""
     name = models.CharField(
-        max_length=MAX_LEN_STRING,
+        max_length=Limits.MAX_LEN_TAG_NAME.value,
         verbose_name='Название',
         unique=True
     )
     slug = models.SlugField(
-        max_length=MAX_LEN_STRING,
+        max_length=Limits.MAX_LEN_TAG_SLUG.value,
         null=True,
         verbose_name='Уникальный слаг',
         unique=True
     )
-    color = models.CharField(
-        max_length=7,
-        null=True,
+    color = ColorField(
+        default='#FF0000',
         verbose_name="Цвет в HEX",
     )
 
@@ -63,7 +68,7 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='Автор')
     name = models.CharField(
-        max_length=MAX_LEN_STRING,
+        max_length=Limits.MAX_LEN_RECIPE_NAME.value,
         verbose_name='Название рецепта')
     text = models.TextField(verbose_name='Текст')
     ingredients = models.ManyToManyField(
