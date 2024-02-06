@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from djoser.views import UserViewSet
 
-from api.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
+from api.permissions import ReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
                              RecipeListSerializer, TagSerializer,
                              ShortRecipeSerializer, RecipeCreateSerializer,
@@ -104,7 +104,7 @@ class CustomUserViewSet(UserViewSet):
 class IngredientViewSet(ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (ReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
 
@@ -180,4 +180,4 @@ class RecipesViewSet(ModelViewSet):
 class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [IsAdminOrReadOnly, ]
+    permission_classes = [ReadOnly, ]
