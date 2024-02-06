@@ -8,13 +8,13 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from djoser.views import UserViewSet
+from djoser.views import UserViewSet as DjoserUserViewSet
 
 from api.permissions import ReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
                              RecipeListSerializer, TagSerializer,
                              ShortRecipeSerializer, RecipeCreateSerializer,
-                             CustomUserSerializer, SubscribeSerializer,
+                             UserSerializer, SubscribeSerializer,
                              SubscriptionsSerializer, PasswordSerializer)
 from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
 from users.models import Subscribe
@@ -28,9 +28,9 @@ class CustomPagination(PageNumberPagination):
     page_size_query_param = 'limit'
 
 
-class CustomUserViewSet(UserViewSet):
+class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all()
-    serializer_class = CustomUserSerializer
+    serializer_class = UserSerializer
     pagination_class = CustomPagination
     permission_classes = (AllowAny,)
 

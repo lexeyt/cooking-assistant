@@ -1,5 +1,8 @@
 from django.contrib.auth import get_user_model
-from djoser.serializers import UserCreateSerializer, UserSerializer
+from djoser.serializers import (
+    UserCreateSerializer as DjoserUserCreateSerializer,
+    UserSerializer as DjoserUserSerializer
+)
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
@@ -11,8 +14,8 @@ from users.models import Subscribe
 User = get_user_model()
 
 
-class CustomUserCreateSerializer(UserCreateSerializer):
-    class Meta(UserCreateSerializer.Meta):
+class UserCreateSerializer(DjoserUserCreateSerializer):
+    class Meta(DjoserUserCreateSerializer.Meta):
         fields = ('email', 'id', 'username',
                   'first_name', 'last_name', 'password')
 
@@ -22,7 +25,7 @@ class PasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, write_only=True)
 
 
-class CustomUserSerializer(UserSerializer):
+class UserSerializer(DjoserUserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     def get_is_subscribed(self, obj):
@@ -78,7 +81,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
     is_favorited = SerializerMethodField(read_only=True)
     is_in_shopping_cart = SerializerMethodField(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
-    author = CustomUserSerializer(read_only=True)
+    author = UserSerializer(read_only=True)
     ingredients = SerializerMethodField()
     image = Base64ImageField()
 
@@ -97,7 +100,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
         if user.is_anonymous:
             return False
         return user.shopping_cart.filter(recipe=obj).exists()
-        return False
 
     class Meta:
         model = Recipe
@@ -196,7 +198,7 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
         )
 
 
-class SubscriptionsSerializer(CustomUserSerializer):
+class SubscriptionsSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
