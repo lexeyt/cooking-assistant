@@ -8,7 +8,9 @@ from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe)
+from recipes.enums import Limits
+from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe,
+                            Favorite, ShoppingCart)
 from users.models import Subscribe
 
 User = get_user_model()
@@ -123,7 +125,11 @@ class IngredientCreateInRecipeSerializer(serializers.ModelSerializer):
         source='ingredient',
         queryset=Ingredient.objects.all()
     )
-    amount = serializers.IntegerField(write_only=True, min_value=1)
+    amount = serializers.IntegerField(
+        write_only=True,
+        min_value=Limits.MIN_AMOUNT_INGREDIENT.value,
+        max_value=Limits.MAX_AMOUNT_INGREDIENT.value,
+    )
 
     class Meta:
         model = RecipeIngredient
@@ -135,6 +141,11 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                               many=True)
     image = Base64ImageField(required=False)
+    cooking_time = serializers.IntegerField(
+        write_only=True,
+        min_value=Limits.MIN_VALUE_COOKING_TIME.value,
+        max_value=Limits.MAX_VALUE_COOKING_TIME.value,
+    )
 
     def create_ingredients(self, ingredients, recipe):
         create_ingredients = [
@@ -250,3 +261,53 @@ class SubscribeSerializer(serializers.ModelSerializer):
                 message='Вы уже подписаны на этого пользователя'
             )
         ]
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        request = self.context.get('request')
+        if request.method == 'POST' and Favorite.objects.filter(
+                user=data['user'],
+                recipe=data['recipe']
+        ).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже в избранном'
+            )
+        elif request.method == 'DELETE' and not Favorite.objects.filter(
+                user=data['user'],
+                recipe=data['recipe']
+        ).exists():
+            raise serializers.ValidationError(
+                'Рецепт отсутствует в избранном'
+            )
+        return data
+
+    class Meta:
+        model = Favorite
+        fields = ('user', 'recipe')
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        request = self.context.get('request')
+        if request.method == 'POST' and ShoppingCart.objects.filter(
+                user=data['user'],
+                recipe=data['recipe']
+        ).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже в корзине'
+            )
+        elif request.method == 'DELETE' and not ShoppingCart.objects.filter(
+                user=data['user'],
+                recipe=data['recipe']
+        ).exists():
+            raise serializers.ValidationError(
+                'Рецепт отсутствует в корзине'
+            )
+        return data
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('user', 'recipe')

@@ -298,7 +298,7 @@ class RecipeTestCase(TestCase):
         data = {
             "name": "Медовуха",
             "text": "Сварить",
-            "ingredients": [{'id': self.salt.id, 'amount': '22'}, ],
+            "ingredients": [{'id': self.salt.id, 'amount': '10'}, ],
             "tags": [self.tag_white.pk, self.tag_black.pk, ],
             "cooking_time": 1,
         }
@@ -364,8 +364,13 @@ class FavoriteTestCase(TestCase):
         resp = self.client_auth.post(url)
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(Favorite.objects.all()), 1)
+
         resp = self.client_auth.post(url)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+        resp = self.client_auth.post(url)
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
         resp = self.client_auth.delete(url)
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(Favorite.objects.all()), 0)

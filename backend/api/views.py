@@ -2,36 +2,34 @@ from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from djoser.views import UserViewSet as DjoserUserViewSet
 
 from api.permissions import ReadOnly, IsOwnerOrReadOnly
 from api.serializers import (IngredientSerializer,
                              RecipeListSerializer, TagSerializer,
                              ShortRecipeSerializer, RecipeCreateSerializer,
                              UserSerializer, SubscribeSerializer,
-                             SubscriptionsSerializer, PasswordSerializer)
+                             SubscriptionsSerializer, PasswordSerializer,
+                             FavoriteSerializer, ShoppingCartSerializer)
 from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
 from users.models import Subscribe
+
 from .filters import IngredientFilter
 from .utils import ingredients_in_cart
+from .paginators import PageNumberPagination
 
 User = get_user_model()
-
-
-class CustomPagination(PageNumberPagination):
-    page_size_query_param = 'limit'
 
 
 class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    pagination_class = CustomPagination
+    pagination_class = PageNumberPagination
     permission_classes = (AllowAny,)
 
     @action(
@@ -77,28 +75,27 @@ class UserViewSet(DjoserUserViewSet):
 
     @action(
         detail=True,
-        methods=['post', 'delete'],
+        methods=['post'],
         permission_classes=[IsAuthenticated]
     )
     def subscribe(self, request, id):
-        user = request.user
         author = get_object_or_404(User, id=id)
+        serializer = SubscribeSerializer(
+            data={'user': request.user.id, 'author': author.id},
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if request.method == 'POST':
-            serializer = SubscribeSerializer(
-                data={'user': request.user.id, 'author': author.id},
-                context={'request': request}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        if request.method == 'DELETE':
-            subscription = get_object_or_404(Subscribe,
-                                             user=user,
-                                             author=author)
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+    @subscribe.mapping.delete
+    def delete_subscribtion(self, request, id):
+        get_object_or_404(
+            Subscribe,
+            user=request.user,
+            author=get_object_or_404(User, id=id)
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class IngredientViewSet(ModelViewSet):
@@ -112,7 +109,7 @@ class IngredientViewSet(ModelViewSet):
 class RecipesViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (IsOwnerOrReadOnly, )
-    pagination_class = CustomPagination
+    pagination_class = PageNumberPagination
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -129,8 +126,17 @@ class RecipesViewSet(ModelViewSet):
     )
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
+        serializer = FavoriteSerializer(
+            data={'user': request.user.id, 'recipe': pk},
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
         if request.method == 'POST':
-            return self.add_relation(Favorite, request.user, recipe)
+            serializer.save()
+            return Response(
+                ShortRecipeSerializer(recipe).data,
+                status=status.HTTP_201_CREATED
+            )
         else:
             return self.remove_relation(Favorite, request.user, recipe)
 
@@ -141,26 +147,23 @@ class RecipesViewSet(ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
+        serializer = ShoppingCartSerializer(
+            data={'user': request.user.id, 'recipe': pk},
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
         if request.method == 'POST':
-            return self.add_relation(ShoppingCart, request.user, recipe)
+            serializer.save()
+            return Response(
+                ShortRecipeSerializer(recipe).data,
+                status=status.HTTP_201_CREATED
+            )
         else:
             return self.remove_relation(ShoppingCart, request.user, recipe)
 
-    def add_relation(self, model, user, recipe):
-        if model.objects.filter(user=user, recipe=recipe).exists():
-            return Response(data={'errors': 'Рецепт уже добавлен!'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        model.objects.create(user=user, recipe=recipe)
-        serializer = ShortRecipeSerializer(recipe)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
     def remove_relation(self, model, user, recipe):
-        obj = model.objects.filter(user=user, recipe=recipe)
-        if obj.exists():
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(data={'errors': 'Рецепт уже удален!'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        model.objects.filter(user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
