@@ -1,10 +1,14 @@
 from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
-from .enums import Limits
+from .constants import (INGREDIENT_NAME_MAX_LEN, MEASUREMENT_UNIT_NAME_MAX_LEN,
+                        TAG_NAME_MAX_LEN, TAG_SLUG_MAX_LEN,
+                        RECIPE_NAME_MAX_LEN, COOKING_TIME_MIN_VALUE,
+                        COOKING_TIME_MAX_VALUE, AMOUNT_INGREDIENT_MIN_VALUE,
+                        AMOUNT_INGREDIENT_MAX_VALUE)
 from .utils import text_relation
 
 User = get_user_model()
@@ -13,10 +17,10 @@ User = get_user_model()
 class Ingredient(models.Model):
     """Ingredients for recipes"""
     name = models.CharField(
-        max_length=Limits.MAX_LEN_INGREDIENT_NAME.value,
+        max_length=INGREDIENT_NAME_MAX_LEN,
         verbose_name='Название')
     measurement_unit = models.CharField(
-        max_length=Limits.MAX_LEN_MEASUREMENT_UNIT_NAME.value,
+        max_length=MEASUREMENT_UNIT_NAME_MAX_LEN,
         verbose_name='Единица измерения'
     )
 
@@ -37,12 +41,12 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     """Tags for recipes"""
     name = models.CharField(
-        max_length=Limits.MAX_LEN_TAG_NAME.value,
+        max_length=TAG_NAME_MAX_LEN,
         verbose_name='Название',
         unique=True
     )
     slug = models.SlugField(
-        max_length=Limits.MAX_LEN_TAG_SLUG.value,
+        max_length=TAG_SLUG_MAX_LEN,
         null=True,
         verbose_name='Уникальный слаг',
         unique=True
@@ -69,7 +73,7 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='Автор')
     name = models.CharField(
-        max_length=Limits.MAX_LEN_RECIPE_NAME.value,
+        max_length=RECIPE_NAME_MAX_LEN,
         verbose_name='Название рецепта')
     text = models.TextField(verbose_name='Текст')
     ingredients = models.ManyToManyField(
@@ -91,9 +95,14 @@ class Recipe(models.Model):
         'Время приготовления',
         validators=[
             MinValueValidator(
-                Limits.MIN_VALUE_COOKING_TIME.value,
+                COOKING_TIME_MIN_VALUE,
                 message=f'Минимальное значение '
-                        f'{Limits.MIN_VALUE_COOKING_TIME.value}'
+                        f'{COOKING_TIME_MIN_VALUE}'
+            ),
+            MaxValueValidator(
+                COOKING_TIME_MAX_VALUE,
+                message=f'Максимальное значение '
+                        f'{COOKING_TIME_MAX_VALUE}'
             )
         ]
     )
@@ -113,9 +122,14 @@ class RecipeIngredient(models.Model):
         verbose_name='Количество',
         validators=[
             MinValueValidator(
-                Limits.MIN_AMOUNT_INGREDIENT.value,
+                AMOUNT_INGREDIENT_MIN_VALUE,
                 message=f'Минимальное количество '
-                        f'{Limits.MIN_AMOUNT_INGREDIENT.value}'
+                        f'{AMOUNT_INGREDIENT_MIN_VALUE}'
+            ),
+            MaxValueValidator(
+                AMOUNT_INGREDIENT_MAX_VALUE,
+                message=f'Максимальное значение '
+                        f'{AMOUNT_INGREDIENT_MAX_VALUE}'
             )
         ]
     )

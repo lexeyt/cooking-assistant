@@ -121,7 +121,7 @@ class RecipesViewSet(ModelViewSet):
 
     @action(
         detail=True,
-        methods=['post', 'delete'],
+        methods=['post'],
         permission_classes=[IsAuthenticated]
     )
     def favorite(self, request, pk):
@@ -131,18 +131,25 @@ class RecipesViewSet(ModelViewSet):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        if request.method == 'POST':
-            serializer.save()
-            return Response(
-                ShortRecipeSerializer(recipe).data,
-                status=status.HTTP_201_CREATED
-            )
-        else:
-            return self.remove_relation(Favorite, request.user, recipe)
+        serializer.save()
+        return Response(
+            ShortRecipeSerializer(recipe).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @favorite.mapping.delete
+    def delete_from_favorite(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
+        FavoriteSerializer(
+            data={'user': request.user.id, 'recipe': pk},
+            context={'request': request}
+        ).is_valid(raise_exception=True)
+        Favorite.objects.filter(user=request.user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
-        methods=['post', 'delete'],
+        methods=['post'],
         permission_classes=[IsAuthenticated]
     )
     def shopping_cart(self, request, pk):
@@ -152,17 +159,18 @@ class RecipesViewSet(ModelViewSet):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        if request.method == 'POST':
-            serializer.save()
-            return Response(
-                ShortRecipeSerializer(recipe).data,
-                status=status.HTTP_201_CREATED
-            )
-        else:
-            return self.remove_relation(ShoppingCart, request.user, recipe)
+        serializer.save()
+        return Response(ShortRecipeSerializer(recipe).data,
+                        status=status.HTTP_201_CREATED)
 
-    def remove_relation(self, model, user, recipe):
-        model.objects.filter(user=user, recipe=recipe).delete()
+    @shopping_cart.mapping.delete
+    def delete_from_shopping_cart(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
+        ShoppingCartSerializer(
+            data={'user': request.user.id, 'recipe': pk},
+            context={'request': request}
+        ).is_valid(raise_exception=True)
+        ShoppingCart.objects.filter(user=request.user, recipe=recipe).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(

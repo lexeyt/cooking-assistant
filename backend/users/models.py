@@ -2,7 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import UniqueConstraint
 
-from .enums import Limits
+from .constants import (EMAIL_MAX_LEN, USERNAME_MAX_LEN,
+                        NAME_MAX_LEN, PASSWORD_MAX_LEN)
 
 
 class User(AbstractUser):
@@ -10,25 +11,25 @@ class User(AbstractUser):
 
     email = models.EmailField(
         verbose_name="Адрес электронной почты",
-        max_length=Limits.MAX_LEN_EMAIL_FIELD.value,
+        max_length=EMAIL_MAX_LEN,
         unique=True,
     )
     username = models.CharField(
         verbose_name="Уникальный юзернейм",
-        max_length=Limits.MAX_LEN_USERNAME.value,
+        max_length=USERNAME_MAX_LEN,
         unique=True,
     )
     first_name = models.CharField(
         verbose_name="Имя",
-        max_length=Limits.MAX_LEN_NAME.value,
+        max_length=NAME_MAX_LEN,
     )
     last_name = models.CharField(
         verbose_name="Фамилия",
-        max_length=Limits.MAX_LEN_NAME.value,
+        max_length=NAME_MAX_LEN,
     )
     password = models.CharField(
         verbose_name="Пароль",
-        max_length=Limits.MAX_LEN_PASSWORD.value,
+        max_length=PASSWORD_MAX_LEN,
     )
 
     USERNAME_FIELD = 'email'

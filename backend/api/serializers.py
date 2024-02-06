@@ -8,7 +8,9 @@ from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.enums import Limits
+from recipes.constants import (COOKING_TIME_MIN_VALUE, COOKING_TIME_MAX_VALUE,
+                               AMOUNT_INGREDIENT_MIN_VALUE,
+                               AMOUNT_INGREDIENT_MAX_VALUE)
 from recipes.models import (Ingredient, Tag, RecipeIngredient, Recipe,
                             Favorite, ShoppingCart)
 from users.models import Subscribe
@@ -127,8 +129,8 @@ class IngredientCreateInRecipeSerializer(serializers.ModelSerializer):
     )
     amount = serializers.IntegerField(
         write_only=True,
-        min_value=Limits.MIN_AMOUNT_INGREDIENT.value,
-        max_value=Limits.MAX_AMOUNT_INGREDIENT.value,
+        min_value=AMOUNT_INGREDIENT_MIN_VALUE,
+        max_value=AMOUNT_INGREDIENT_MAX_VALUE,
     )
 
     class Meta:
@@ -143,8 +145,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=False)
     cooking_time = serializers.IntegerField(
         write_only=True,
-        min_value=Limits.MIN_VALUE_COOKING_TIME.value,
-        max_value=Limits.MAX_VALUE_COOKING_TIME.value,
+        min_value=COOKING_TIME_MIN_VALUE,
+        max_value=COOKING_TIME_MAX_VALUE,
     )
 
     def create_ingredients(self, ingredients, recipe):
