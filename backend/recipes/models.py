@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import UniqueConstraint
 
 from .enums import Limits
+from .utils import text_relation
 
 User = get_user_model()
 
@@ -135,7 +136,7 @@ class RecipeIngredient(models.Model):
         verbose_name_plural = 'Ингридиенты в рецептах'
 
     def __str__(self):
-        return f'{self.ingredient} в {self.recipe}'
+        return text_relation(self.ingredient, self.recipe, 'в')
 
 
 class Favorite(models.Model):
@@ -156,6 +157,7 @@ class Favorite(models.Model):
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
+        default_related_name = 'favorites'
         constraints = [
             UniqueConstraint(
                 fields=['user', 'recipe'],
@@ -163,7 +165,7 @@ class Favorite(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.recipe} в избранном у {self.user}'
+        return text_relation(self.recipe, self.user, 'в избранном у')
 
 
 class ShoppingCart(models.Model):
@@ -185,6 +187,7 @@ class ShoppingCart(models.Model):
     class Meta:
         verbose_name = 'Корзина покупок'
         verbose_name_plural = 'Корзина покупок'
+        default_related_name = 'shopping_cart'
         constraints = [
             UniqueConstraint(
                 fields=['user', 'recipe'],
@@ -192,4 +195,4 @@ class ShoppingCart(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.recipe} в корзине у {self.user}'
+        return text_relation(self.recipe, self.user, 'в корзине у')
