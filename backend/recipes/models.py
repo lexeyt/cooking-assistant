@@ -9,7 +9,6 @@ from .constants import (INGREDIENT_NAME_MAX_LEN, MEASUREMENT_UNIT_NAME_MAX_LEN,
                         RECIPE_NAME_MAX_LEN, COOKING_TIME_MIN_VALUE,
                         COOKING_TIME_MAX_VALUE, AMOUNT_INGREDIENT_MIN_VALUE,
                         AMOUNT_INGREDIENT_MAX_VALUE)
-from .utils import text_relation
 
 User = get_user_model()
 
@@ -150,23 +149,38 @@ class RecipeIngredient(models.Model):
         verbose_name_plural = 'Ингридиенты в рецептах'
 
     def __str__(self):
-        return text_relation(self.ingredient, self.recipe, 'в')
+        return f'{self.ingredient} в {self.recipe}'
 
 
-class Favorite(models.Model):
-    """Model to add recipes to favorite"""
+class UserRecipe(models.Model):
+    """Model for connection user and recipe"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='favorites',
+        related_name='%(class)s',
         verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorites',
+        related_name='%(class)s',
         verbose_name='Рецепт'
     )
+
+    class Meta:
+        abstract = True
+        constraints = [
+            UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_user_recipe')
+        ]
+
+    def __str__(self):
+        return f'{self.recipe} в избранном у {self.user} '
+
+
+class Favorite(UserRecipe):
+    """Model to add recipes to favorite"""
 
     class Meta:
         verbose_name = 'Избранное'
@@ -179,24 +193,11 @@ class Favorite(models.Model):
         ]
 
     def __str__(self):
-        return text_relation(self.recipe, self.user, 'в избранном у')
+        return f'{self.recipe} в избранном у {self.user}'
 
 
-class ShoppingCart(models.Model):
+class ShoppingCart(UserRecipe):
     """Shopping cart model"""
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='shopping_cart',
-        verbose_name='Пользователь',
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='shopping_cart',
-        verbose_name='Рецепт',
-    )
 
     class Meta:
         verbose_name = 'Корзина покупок'
@@ -209,4 +210,4 @@ class ShoppingCart(models.Model):
         ]
 
     def __str__(self):
-        return text_relation(self.recipe, self.user, 'в корзине у')
+        return f'{self.recipe} в корзине у {self.user}'
