@@ -306,6 +306,10 @@ class RecipeTestCase(TestCase):
         resp = self.client_auth.post(url, data=data)
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
+        resp = self.client_non_auth.get(reverse('recipes-list'))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data[0]['name'], data['name'])
+
     def test_update_recipe(self):
         url = reverse('recipes-detail', args=(self.recipe.pk,))
         data = {

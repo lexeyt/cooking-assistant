@@ -12,6 +12,8 @@ def ingredients_in_cart(shopping_cart):
         'ingredient__measurement_unit'
     ).annotate(
         amount=Sum('amount')
+    ).order_by(
+        'ingredient__name'
     )
     ingredients_in_cart = 'Shopping list:\n'
     for ingredient in ingredients:

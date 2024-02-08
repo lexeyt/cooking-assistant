@@ -14,7 +14,7 @@ services:
       - pg_data:/var/lib/postgresql/data
 
   backend:
-    image: lexeyt/foodgram_backend:latest
+    build: ../backend/
     env_file: .env
     volumes:
       - static:/app/static_django/
@@ -23,14 +23,14 @@ services:
       - db 
 
   frontend:
-    image: lexeyt/foodgram_frontend:latest
+    build: ../frontend/
     volumes:
       - static_frontend:/app/result_build/
 
   nginx:
     image: nginx:1.19.3
     ports:
-      - "8000:80"
+      - "80:80"
     volumes:
       - static:/static_django/
       - media:/media/

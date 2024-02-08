@@ -105,9 +105,14 @@ class Recipe(models.Model):
             )
         ]
     )
+    creation_date = models.DateTimeField(
+        verbose_name="Дата создания",
+        auto_now_add=True,
+        editable=False,
+    )
 
     class Meta:
-        ordering = ['name']
+        ordering = ['-creation_date']
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 

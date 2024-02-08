@@ -61,7 +61,7 @@ sudo apt install docker-compose-plugin
 - Скопируйте файл docker-compose.production.yml в корневую папку проекта
 - Запустите оркестр с помощью docker compose
 
-#### Полезные команды Docker
+### Полезные команды Docker
 Аутентификация в Docker Hub:
 ```sh
 docker login -u username 
