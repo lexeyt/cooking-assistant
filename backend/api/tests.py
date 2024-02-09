@@ -393,6 +393,10 @@ class FavoriteTestCase(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(len(resp.data['results']), 1)
 
+        resp_non_auth = self.client_non_auth.get(url_favorites, data=data)
+        self.assertEqual(resp_non_auth.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resp_non_auth.data['results']), 0)
+
         resp = self.client_auth.post(url)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
