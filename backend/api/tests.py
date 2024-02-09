@@ -362,6 +362,20 @@ class FavoriteTestCase(TestCase):
             amount=100,
         )
 
+        self.recipe2 = Recipe.objects.create(
+            name='soup2',
+            author=self.user,
+            text='some_text2',
+            cooking_time=1
+        )
+        self.recipe2.tags.add(self.tag_black)
+
+        RecipeIngredient.objects.create(
+            recipe=self.recipe2,
+            ingredient=self.salt,
+            amount=100,
+        )
+
     def test_add_favorite(self):
         url = reverse('recipes-favorite', args=(self.recipe.pk,))
 
@@ -369,8 +383,15 @@ class FavoriteTestCase(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(Favorite.objects.all()), 1)
 
-        resp = self.client_auth.post(url)
-        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        url_favorites = reverse('recipes-list')
+        data = {
+            "page": 1,
+            "limit": 6,
+            "is_favorited": 1,
+        }
+        resp = self.client_auth.get(url_favorites, data=data)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resp.data['results']), 1)
 
         resp = self.client_auth.post(url)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
