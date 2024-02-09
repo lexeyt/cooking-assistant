@@ -112,28 +112,21 @@ class RecipesViewSet(ModelViewSet):
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
-
         queryset = self.queryset
-
         tags = self.request.query_params.getlist('tags')
         if tags:
             queryset = queryset.filter(tags__slug__in=tags).distinct()
-
         author = self.request.query_params.get('author')
         if author:
             queryset = queryset.filter(author=author)
-
         if self.request.user.is_anonymous:
             return queryset
-
         is_in_cart = self.request.query_params.get('is_in_shopping_cart')
         if is_in_cart and is_in_cart.lower() in ('true', '1', 't'):
             queryset = queryset.filter(shoppingcart__user=self.request.user)
-
         is_favorite = self.request.query_params.get('is_favorited')
         if is_favorite and is_favorite.lower() in ('true', '1', 't'):
             queryset = queryset.filter(favorite__user=self.request.user)
-
         return queryset
 
     def perform_create(self, serializer):
