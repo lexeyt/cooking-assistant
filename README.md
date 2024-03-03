@@ -1,7 +1,7 @@
 # Foodgram
 ![example workflow](https://github.com/lexeyt/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
-Дипломный проект для ведения базы рецетов блюд.
+Сервис для ведения базы рецетов блюд.
 
 ## Возможности
 - Регистрация на сайте
